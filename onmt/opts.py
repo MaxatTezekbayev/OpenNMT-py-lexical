@@ -311,6 +311,8 @@ def model_opts(parser):
               choices=['LSTM', 'GRU', 'SRU'],
               action=CheckSRU,
               help="The gate type to use in the RNNs")
+
+
     # group.add('--residual', '-residual',   action="store_true",
     #                     help="Add residual connections between RNN layers.")
 
@@ -365,6 +367,15 @@ def model_opts(parser):
               help='Size of hidden transformer feed-forward')
     group.add('--aan_useffn', '-aan_useffn', action="store_true",
               help='Turn on the FFN layer in the AAN decoder')
+
+    #Lexical Unit
+    group.add('--lexical_unit', '-lexical_unit', action="store_true",
+              help='Turn on lexical unit from Nguyen & Chiang 2018')
+    group.add('--fixnorm', '-fixnorm', action="store_true",
+              help='Turn on fixnorm')
+    group.add('--fixnorm_r', '-fixnorm_r', type=float, default=1,
+              help='r in fixnorm')
+
 
     # Alignement options
     group = parser.add_argument_group('Model - Alignement')

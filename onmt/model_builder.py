@@ -190,6 +190,23 @@ def use_embeddings_from_checkpoint(fields, model, generator, checkpoint):
             logger.info("%s: %d new tokens" % (name, len(new_tokens)))
 
 
+
+class LexicalUnitGenerator(nn.Module):
+    def __init__(self, input_size, output_size, gen_func):
+        super(LexicalUnitGenerator, self).__init__()
+        self.linearWo = nn.Linear(input_size, output_size),
+        self.linearWl = nn.Linear(input_size, output_size),
+        self.gen_func = gen_func
+        
+
+    def forward(self, x):
+        #encode
+        Wo_output = self.linearWo(x[0])
+        Wl_output = self.linearWl(x[1])
+
+        output = self.gen_func(Wo_output+Wl_output)
+        return output
+
 def build_base_model(model_opt, fields, gpu, checkpoint=None, gpu_id=None):
     """Build a model from opts.
 
@@ -230,14 +247,21 @@ def build_base_model(model_opt, fields, gpu, checkpoint=None, gpu_id=None):
             gen_func = onmt.modules.sparse_activations.LogSparsemax(dim=-1)
         else:
             gen_func = nn.LogSoftmax(dim=-1)
-        generator = nn.Sequential(
-            nn.Linear(model_opt.dec_rnn_size,
+
+        if model_opt.lexical_unit:
+            generator = LexicalUnitGenerator(model_opt.dec_rnn_size, len(fields["tgt"].base_field.vocab))
+        else:
+            generator = nn.Sequential(
+                nn.Linear(model_opt.dec_rnn_size,
                       len(fields["tgt"].base_field.vocab)),
-            Cast(torch.float32),
-            gen_func
-        )
+                Cast(torch.float32),
+                gen_func
+            )
         if model_opt.share_decoder_embeddings:
-            generator[0].weight = model.decoder.embeddings.word_lut.weight
+            if model_opt.lexical_unit:
+                generator.linearWo.weight = model.decoder.embeddings.word_lut.weight
+            else:
+                generator[0].weight = model.decoder.embeddings.word_lut.weight
     else:
         tgt_base_field = fields["tgt"].base_field
         vocab_size = len(tgt_base_field.vocab)

@@ -362,6 +362,7 @@ class InputFeedRNNDecoder(RNNDecoderBase):
         of arguments and return values.
         """
         # Additional args check.
+        print(self.state.keys())
         input_feed = self.state["input_feed"].squeeze(0)
         input_feed_batch, _ = input_feed.size()
         _, tgt_batch, _ = tgt.size()
