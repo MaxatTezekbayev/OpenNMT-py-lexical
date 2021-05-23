@@ -1,5 +1,6 @@
 """ Onmt NMT Model base class definition """
 import torch.nn as nn
+import torch
 
 
 class BaseModel(nn.Module):
@@ -57,6 +58,13 @@ class NMTModel(BaseModel):
         self.encoder = encoder
         self.decoder = decoder
 
+        if self.decoder.lexical_unit:
+            self.lexical_context_projection = nn.Linear(self.decoder.hidden_size, self.decoder.hidden_size, bias=False)
+            self.final_lexical_projection = nn.Linear(self.decoder.hidden_size, self.decoder.embeddings.word_vocab_size)
+            self.generator_linear = nn.Linear(self.decoder.hidden_size, self.decoder.embeddings.word_vocab_size)
+            
+            
+
     def forward(self, src, tgt, lengths, bptt=False, with_align=False):
         dec_in = tgt[:-1]  # exclude last target from inputs
 
@@ -67,6 +75,22 @@ class NMTModel(BaseModel):
         dec_out, attns = self.decoder(dec_in, memory_bank,
                                       memory_lengths=lengths,
                                       with_align=with_align)
+
+
+        if self.decoder.lexical_unit:
+            src_embs = self.encoder.embeddings(src)
+            lexical_contexts = []
+            # print(dec_out.shape)
+            # print(attns['std'].shape)
+            # print(attns['std'][1].unsqueeze(dim=1).shape)
+            # print(src_embs.transpose(0,1).shape)
+            # print('hello')
+            for j in range(attns['std'].shape[0]):
+                lexical_context = torch.tanh(torch.bmm(attns['std'][j].unsqueeze(dim=1), src_embs.transpose(0,1)).squeeze(dim=1))
+                lexical_contexts.append(torch.tanh(self.lexical_context_projection(lexical_context)) + lexical_context)
+            lexical_contexts = torch.stack(lexical_contexts)
+            dec_out = self.generator_linear(dec_out) + self.final_lexical_projection(lexical_contexts)
+
         return dec_out, attns
 
     def update_dropout(self, dropout):

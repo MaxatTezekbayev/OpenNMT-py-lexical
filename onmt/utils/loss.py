@@ -258,11 +258,14 @@ class CommonLossCompute(LossComputeBase):
     Implement loss compatible with coverage and alignement shards
     """
     def __init__(self, criterion, generator, normalization="sents",
-                 lambda_coverage=0.0, lambda_align=0.0, tgt_shift_index=1):
+                 lambda_coverage=0.0, lambda_align=0.0, tgt_shift_index=1, lexical_unit=False, fixnorm=False, fixnorm_r=None):
         super(CommonLossCompute, self).__init__(criterion, generator)
         self.lambda_coverage = lambda_coverage
         self.lambda_align = lambda_align
         self.tgt_shift_index = tgt_shift_index
+        self.lexical_unit = lexical_unit
+        self.fixnorm = fixnorm
+        self.fixnorm_r = fixnorm_r
 
     def _add_coverage_shard_state(self, shard_state, attns):
         coverage = attns.get("coverage", None)
@@ -371,12 +374,12 @@ class NMTLossCompute(CommonLossCompute):
     Standard NMT Loss Computation.
     """
     def __init__(self, criterion, generator, normalization="sents",
-                 lambda_coverage=0.0, lambda_align=0.0):
+                 lambda_coverage=0.0, lambda_align=0.0, lexical_unit=False, fixnorm=False, fixnorm_r=None):
         super(NMTLossCompute, self).__init__(criterion, generator,
                                              normalization=normalization,
                                              lambda_coverage=lambda_coverage,
                                              lambda_align=lambda_align,
-                                             tgt_shift_index=1)
+                                             tgt_shift_index=1, lexical_unit=lexical_unit, fixnorm=fixnorm, fixnorm_r=fixnorm_r)
 
 
 class LMLossCompute(CommonLossCompute):

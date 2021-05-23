@@ -84,7 +84,7 @@ class RNNDecoderBase(DecoderBase):
                  hidden_size, attn_type="general", attn_func="softmax",
                  coverage_attn=False, context_gate=None,
                  copy_attn=False, dropout=0.0, embeddings=None,
-                 reuse_copy_attn=False, copy_attn_type="general"):
+                 reuse_copy_attn=False, copy_attn_type="general", lexical_unit=False):
         super(RNNDecoderBase, self).__init__(
             attentional=attn_type != "none" and attn_type is not None)
 
@@ -93,6 +93,7 @@ class RNNDecoderBase(DecoderBase):
         self.hidden_size = hidden_size
         self.embeddings = embeddings
         self.dropout = nn.Dropout(dropout)
+        self.lexical_unit = lexical_unit
 
         # Decoder state
         self.state = {}
@@ -155,7 +156,8 @@ class RNNDecoderBase(DecoderBase):
             else opt.dropout,
             embeddings,
             opt.reuse_copy_attn,
-            opt.copy_attn_type)
+            opt.copy_attn_type,
+            opt.lexical_unit)
 
     def init_state(self, src, memory_bank, encoder_final):
         """Initialize decoder state with last state of the encoder."""
@@ -362,7 +364,6 @@ class InputFeedRNNDecoder(RNNDecoderBase):
         of arguments and return values.
         """
         # Additional args check.
-        print(self.state.keys())
         input_feed = self.state["input_feed"].squeeze(0)
         input_feed_batch, _ = input_feed.size()
         _, tgt_batch, _ = tgt.size()

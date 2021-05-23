@@ -123,7 +123,7 @@ class Embeddings(nn.Module):
         self.word_padding_idx = word_padding_idx
 
         self.word_vec_size = word_vec_size
-
+        self.word_vocab_size = word_vocab_size
         # Dimensions and padding for constructing the word embedding matrix
         vocab_sizes = [word_vocab_size]
         emb_dims = [word_vec_size]
